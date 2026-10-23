@@ -1,0 +1,53 @@
+@import "tailwindcss";
+
+:root {
+  --ink: #1c1915;
+  --ink-muted: #6b6358;
+  --steam: #f3ede4;
+  --flour: #fffcfa;
+  --crust: #3d2a1f;
+  --crust-soft: #5c4033;
+  --butter: #d4a017;
+  --butter-soft: #f0d78c;
+  --sage: #4a6b5a;
+  --sage-soft: #d8e6de;
+  --ember: #b54a2e;
+  --ember-soft: #f5ddd6;
+  --rule: #ddd4c8;
+  --background: var(--steam);
+  --foreground: var(--ink);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-steam: var(--steam);
+  --color-flour: var(--flour);
+  --color-crust: var(--crust);
+  --color-crust-soft: var(--crust-soft);
+  --color-butter: var(--butter);
+  --color-butter-soft: var(--butter-soft);
+  --color-sage: var(--sage);
+  --color-sage-soft: var(--sage-soft);
+  --color-ember: var(--ember);
+  --color-ember-soft: var(--ember-soft);
+  --color-rule: var(--rule);
+  --font-sans: var(--font-outfit);
+  --font-display: var(--font-fraunces);
+}
+
+body {
+  background:
+    radial-gradient(1200px 600px at 15% -10%, rgba(197, 208, 216, 0.55), transparent 55%),
+    radial-gradient(900px 500px at 90% 0%, rgba(212, 160, 23, 0.12), transparent 50%),
+    var(--steam);
+  color: var(--ink);
+  font-family: var(--font-outfit), system-ui, sans-serif;
+  min-height: 100vh;
+}
+
+.font-display {
+  font-family: var(--font-fraunces), Georgia, serif;
+}

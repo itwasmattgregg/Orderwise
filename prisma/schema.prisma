@@ -1,0 +1,140 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String          @id @default(cuid())
+  email       String          @unique
+  name        String
+  password    String          @default("demo")
+  memberships Membership[]
+  messages    Activity[]
+  inventory   InventoryItem[]
+  createdAt   DateTime        @default(now())
+}
+
+model Organization {
+  id                 String          @id @default(cuid())
+  name               String
+  kind               String // BAKERY | CAFE | BOTH
+  memberships        Membership[]
+  products           Product[]
+  supplierAgreements Agreement[]     @relation("SupplierOrg")
+  buyerAgreements    Agreement[]     @relation("BuyerOrg")
+  inventory          InventoryItem[]
+  createdAt          DateTime        @default(now())
+}
+
+model Membership {
+  id     String       @id @default(cuid())
+  userId String
+  orgId  String
+  role   String       @default("member")
+  user   User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  org    Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, orgId])
+}
+
+model Product {
+  id         String           @id @default(cuid())
+  orgId      String
+  name       String
+  unit       String           @default("ea")
+  priceCents Int
+  notes      String?
+  active     Boolean          @default(true)
+  org        Organization     @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  assortment AssortmentItem[]
+  createdAt  DateTime         @default(now())
+}
+
+model Agreement {
+  id            String           @id @default(cuid())
+  supplierOrgId String
+  buyerOrgId    String
+  status        String           @default("ACTIVE") // DRAFT | ACTIVE | PAUSED | ENDED
+  cadenceLabel  String           @default("Mon · Wed · Fri")
+  cutoffLabel   String           @default("2:00pm day before")
+  settlement    String           @default("MANUAL") // CARD | STRIPE_INVOICE | MANUAL
+  supplierOrg   Organization     @relation("SupplierOrg", fields: [supplierOrgId], references: [id])
+  buyerOrg      Organization     @relation("BuyerOrg", fields: [buyerOrgId], references: [id])
+  assortment    AssortmentItem[]
+  deliveries    Delivery[]
+  activities    Activity[]
+  createdAt     DateTime         @default(now())
+}
+
+model AssortmentItem {
+  id             String         @id @default(cuid())
+  agreementId    String
+  productId      String
+  standingQty    Int
+  unitPriceCents Int?
+  agreement      Agreement      @relation(fields: [agreementId], references: [id], onDelete: Cascade)
+  product        Product        @relation(fields: [productId], references: [id])
+  lines          DeliveryLine[]
+
+  @@unique([agreementId, productId])
+}
+
+model Delivery {
+  id          String         @id @default(cuid())
+  agreementId String
+  date        DateTime
+  status      String         @default("SCHEDULED") // SCHEDULED | CONFIRMED | DELIVERED | SKIPPED
+  note        String?
+  agreement   Agreement      @relation(fields: [agreementId], references: [id], onDelete: Cascade)
+  lines       DeliveryLine[]
+  createdAt   DateTime       @default(now())
+
+  @@index([agreementId, date])
+}
+
+model DeliveryLine {
+  id               String         @id @default(cuid())
+  deliveryId       String
+  assortmentItemId String
+  qty              Int
+  pendingAck       Boolean        @default(false)
+  requestedQty     Int?
+  delivery         Delivery       @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
+  assortmentItem   AssortmentItem @relation(fields: [assortmentItemId], references: [id])
+
+  @@unique([deliveryId, assortmentItemId])
+}
+
+model Activity {
+  id          String    @id @default(cuid())
+  agreementId String
+  kind        String // MESSAGE | SYSTEM
+  body        String
+  authorId    String?
+  agreement   Agreement @relation(fields: [agreementId], references: [id], onDelete: Cascade)
+  author      User?     @relation(fields: [authorId], references: [id])
+  createdAt   DateTime  @default(now())
+
+  @@index([agreementId, createdAt])
+}
+
+/// Super-simple inventory: either org can track counts for a label/SKU.
+model InventoryItem {
+  id        String       @id @default(cuid())
+  orgId     String
+  userId    String?
+  label     String
+  qty       Int          @default(0)
+  unit      String       @default("ea")
+  notes     String?
+  org       Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user      User?        @relation(fields: [userId], references: [id])
+  updatedAt DateTime     @updatedAt
+  createdAt DateTime     @default(now())
+
+  @@index([orgId])
+}
